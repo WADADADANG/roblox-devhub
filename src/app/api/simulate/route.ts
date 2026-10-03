@@ -341,10 +341,19 @@ end
         const jsonStr = result.stdout.substring(markerIndex + marker.length).trim();
         try {
           const parsed = JSON.parse(jsonStr);
+          const toArray = (v: any) => {
+            if (Array.isArray(v)) return v;
+            if (v && typeof v === "object") {
+              const vals = Object.values(v);
+              if (vals.length > 0) return vals;
+            }
+            return [];
+          };
+
           return NextResponse.json({
             success: true,
-            logs: parsed.logs || [],
-            explorer: parsed.explorer || [],
+            logs: toArray(parsed.logs),
+            explorer: toArray(parsed.explorer),
             executionTimeMs,
           });
         } catch {

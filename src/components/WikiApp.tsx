@@ -227,8 +227,8 @@ export default function WikiApp({ initialMode = "wiki", initialId }: WikiAppProp
         body: JSON.stringify({ code: codeToRun }),
       });
       const data = await res.json();
-      setSimLogs(data.logs || []);
-      setSimExplorer(data.explorer || []);
+      setSimLogs(Array.isArray(data.logs) ? data.logs : []);
+      setSimExplorer(Array.isArray(data.explorer) ? data.explorer : []);
       setSimExecutionTime(data.executionTimeMs ?? null);
     } catch (err: any) {
       setSimLogs([
