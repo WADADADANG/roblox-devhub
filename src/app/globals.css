@@ -31,22 +31,29 @@ body {
 }
 
 /* Custom Sleek Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 rgba(13, 18, 28, 0.6);
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: rgba(13, 18, 28, 0.6);
   border-radius: 9999px;
 }
 
+::-webkit-scrollbar-thumb {
+  background: #2D3D5A;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;
+  background: #00F5D4;
 }
 
 /* Glassmorphism & Glow Utilities */

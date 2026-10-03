@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Play,
   RotateCcw,
@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Folder,
   Share2,
+  ArrowDown,
 } from "lucide-react";
 
 export interface LogEntry {
@@ -157,11 +158,19 @@ export default function SimulatorPlayground({
   const [selectedInstance, setSelectedInstance] = useState<InstanceNode | null>(null);
   const [copied, setCopied] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
   const filteredLogs = logs.filter((log) => {
     if (logFilter === "all") return true;
     return log.type === logFilter;
   });
+
+  // Auto-scroll to bottom of logs when new logs are received
+  useEffect(() => {
+    if (activeTab === "console" && logs.length > 0) {
+      logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [logs, activeTab]);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(code);
@@ -282,9 +291,9 @@ export default function SimulatorPlayground({
       {/* Main Split Layout: Editor (Left) & Output / Explorer (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT COLUMN: CODE EDITOR (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col rounded-2xl bg-[#090D17] border border-[#19233A] shadow-xl overflow-hidden min-h-[560px]">
+        <div className="lg:col-span-7 flex flex-col rounded-2xl bg-[#090D17] border border-[#19233A] shadow-xl overflow-hidden h-[580px] lg:h-[640px]">
           {/* Editor Header */}
-          <div className="h-11 px-4 bg-[#0D1220] border-b border-[#1A253D] flex items-center justify-between">
+          <div className="h-11 shrink-0 px-4 bg-[#0D1220] border-b border-[#1A253D] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Code2 className="w-4 h-4 text-[#00F5D4]" />
               <span className="text-xs font-mono font-semibold text-slate-200">
@@ -324,18 +333,18 @@ export default function SimulatorPlayground({
           </div>
 
           {/* Code Textarea Area */}
-          <div className="flex-1 p-4 relative font-mono text-xs sm:text-sm bg-[#070A12]">
+          <div className="flex-1 min-h-0 p-4 relative font-mono text-xs sm:text-sm bg-[#070A12]">
             <textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="-- Write Luau code here..."
               spellCheck={false}
-              className="w-full h-full min-h-[460px] bg-transparent text-slate-100 resize-none focus:outline-none font-mono leading-relaxed selection:bg-[#00F5D4]/20"
+              className="w-full h-full bg-transparent text-slate-100 resize-none focus:outline-none font-mono leading-relaxed selection:bg-[#00F5D4]/20"
             />
           </div>
 
           {/* Editor Action Bottom Bar */}
-          <div className="p-3 bg-[#0D1220] border-t border-[#1A253D] flex items-center justify-between">
+          <div className="p-3 shrink-0 bg-[#0D1220] border-t border-[#1A253D] flex items-center justify-between">
             <span className="text-[11px] text-slate-400 font-mono">
               {lang === "th" ? "รองรับ: Instance, Vector3, CFrame, workspace, task" : "Supported: Instance, Vector3, CFrame, workspace, task"}
             </span>
@@ -361,9 +370,9 @@ export default function SimulatorPlayground({
         </div>
 
         {/* RIGHT COLUMN: F9 CONSOLE & VIRTUAL EXPLORER (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col rounded-2xl bg-[#090D17] border border-[#19233A] shadow-xl overflow-hidden min-h-[560px]">
+        <div className="lg:col-span-5 flex flex-col rounded-2xl bg-[#090D17] border border-[#19233A] shadow-xl overflow-hidden h-[580px] lg:h-[640px]">
           {/* Tab Switcher Header */}
-          <div className="h-11 px-3 bg-[#0D1220] border-b border-[#1A253D] flex items-center justify-between">
+          <div className="h-11 shrink-0 px-3 bg-[#0D1220] border-b border-[#1A253D] flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setActiveTab("console")}
@@ -420,26 +429,39 @@ export default function SimulatorPlayground({
 
           {/* TAB 1: CONSOLE VIEW */}
           {activeTab === "console" && (
-            <div className="flex-1 flex flex-col overflow-hidden bg-[#06080F]">
-              {/* Filter Sub-bar */}
-              <div className="px-3 py-1.5 bg-[#0A0E18] border-b border-[#141B2D] flex items-center gap-1 overflow-x-auto no-scrollbar">
-                {(["all", "info", "warn", "error"] as const).map((f) => (
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-[#06080F]">
+              {/* Filter Sub-bar & Quick Scroll Actions */}
+              <div className="shrink-0 px-3 py-1.5 bg-[#0A0E18] border-b border-[#141B2D] flex items-center justify-between gap-1">
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                  {(["all", "info", "warn", "error"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setLogFilter(f)}
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase transition-all cursor-pointer ${
+                        logFilter === f
+                          ? "bg-[#18233C] text-white font-bold"
+                          : "text-slate-500 hover:text-slate-300"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+
+                {filteredLogs.length > 5 && (
                   <button
-                    key={f}
-                    onClick={() => setLogFilter(f)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase transition-all cursor-pointer ${
-                      logFilter === f
-                        ? "bg-[#18233C] text-white font-bold"
-                        : "text-slate-500 hover:text-slate-300"
-                    }`}
+                    onClick={() => logsEndRef.current?.scrollIntoView({ behavior: "smooth" })}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono text-slate-400 hover:text-[#00F5D4] hover:bg-[#121A2E] transition-all cursor-pointer"
+                    title={lang === "th" ? "เลื่อนลงล่างสุด" : "Scroll to bottom"}
                   >
-                    {f}
+                    <ArrowDown className="w-3 h-3" />
+                    <span>{lang === "th" ? "ล่างสุด" : "Bottom"}</span>
                   </button>
-                ))}
+                )}
               </div>
 
-              {/* Log entries */}
-              <div className="flex-1 p-3 overflow-y-auto font-mono text-xs space-y-1.5">
+              {/* Log entries with internal scroll container */}
+              <div className="flex-1 min-h-0 p-3 overflow-y-auto font-mono text-xs space-y-1.5">
                 {filteredLogs.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-slate-500 text-center p-6 space-y-2">
                     <Terminal className="w-8 h-8 text-slate-600 mb-1" />
@@ -450,29 +472,32 @@ export default function SimulatorPlayground({
                     </p>
                   </div>
                 ) : (
-                  filteredLogs.map((log, index) => {
-                    const isError = log.type === "error";
-                    const isWarn = log.type === "warn";
-                    return (
-                      <div
-                        key={index}
-                        className={`p-2 rounded-lg leading-relaxed flex items-start gap-2 border ${
-                          isError
-                            ? "bg-[#2A0E12] border-[#591C24] text-[#FCA5A5]"
-                            : isWarn
-                            ? "bg-[#291A08] border-[#5E3A12] text-[#FDE68A]"
-                            : "bg-[#0B101D] border-[#162035] text-slate-200"
-                        }`}
-                      >
-                        <span className="text-[10px] text-slate-500 shrink-0 font-sans mt-0.5">
-                          {log.time}
-                        </span>
-                        <div className="flex-1 break-all whitespace-pre-wrap">
-                          {log.text}
+                  <>
+                    {filteredLogs.map((log, index) => {
+                      const isError = log.type === "error";
+                      const isWarn = log.type === "warn";
+                      return (
+                        <div
+                          key={index}
+                          className={`p-2 rounded-lg leading-relaxed flex items-start gap-2 border ${
+                            isError
+                              ? "bg-[#2A0E12] border-[#591C24] text-[#FCA5A5]"
+                              : isWarn
+                              ? "bg-[#291A08] border-[#5E3A12] text-[#FDE68A]"
+                              : "bg-[#0B101D] border-[#162035] text-slate-200"
+                          }`}
+                        >
+                          <span className="text-[10px] text-slate-500 shrink-0 font-sans mt-0.5">
+                            {log.time}
+                          </span>
+                          <div className="flex-1 break-all whitespace-pre-wrap">
+                            {log.text}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                    <div ref={logsEndRef} />
+                  </>
                 )}
               </div>
             </div>
@@ -480,17 +505,17 @@ export default function SimulatorPlayground({
 
           {/* TAB 2: VIRTUAL EXPLORER VIEW */}
           {activeTab === "explorer" && (
-            <div className="flex-1 flex flex-col overflow-hidden bg-[#06080F]">
-              <div className="p-3 border-b border-[#141B2D] bg-[#0A0E18] text-xs font-semibold text-slate-400 flex items-center justify-between">
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-[#06080F]">
+              <div className="shrink-0 p-3 border-b border-[#141B2D] bg-[#0A0E18] text-xs font-semibold text-slate-400 flex items-center justify-between">
                 <span>📁 Workspace Hierarchy</span>
                 <span className="text-[10px] text-slate-500 font-mono">
                   {explorer.length} Objects
                 </span>
               </div>
 
-              <div className="flex-1 flex overflow-hidden">
+              <div className="flex-1 min-h-0 flex overflow-hidden">
                 {/* Left: Tree list */}
-                <div className="flex-1 p-2 overflow-y-auto space-y-1 border-r border-[#141B2D]">
+                <div className="flex-1 min-h-0 p-2 overflow-y-auto space-y-1 border-r border-[#141B2D]">
                   {explorer.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-500 text-center p-6 space-y-2">
                       <FolderTree className="w-8 h-8 text-slate-600 mb-1" />
@@ -506,7 +531,7 @@ export default function SimulatorPlayground({
                 </div>
 
                 {/* Right: Property Inspector */}
-                <div className="w-48 p-3 overflow-y-auto bg-[#090D17] text-xs space-y-3">
+                <div className="w-48 shrink-0 p-3 overflow-y-auto bg-[#090D17] text-xs space-y-3">
                   <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     Properties
                   </div>
