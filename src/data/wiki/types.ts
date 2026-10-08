@@ -43,13 +43,13 @@ export interface WikiEntry {
 }
 
 export const CATEGORIES = [
-  { id: "All", labelTh: "All", labelEn: "All", icon: "Layers" },
-  { id: "World", labelTh: "World & Raycast", labelEn: "World & Raycast", icon: "Globe" },
-  { id: "Physics", labelTh: "Physics & Welds", labelEn: "Physics & Welds", icon: "Boxes" },
-  { id: "GameLoop", labelTh: "Game Loop & Time", labelEn: "Game Loop & Time", icon: "Timer" },
-  { id: "Input", labelTh: "Input & Controls", labelEn: "Input & Controls", icon: "Keyboard" },
-  { id: "Camera", labelTh: "Camera System", labelEn: "Camera System", icon: "Camera" },
-  { id: "Network", labelTh: "Network & Remotes", labelEn: "Network & Remotes", icon: "Network" },
-  { id: "Player", labelTh: "Player & Character", labelEn: "Player & Character", icon: "User" },
-  { id: "Animation", labelTh: "Tween & Visuals", labelEn: "Tween & Visuals", icon: "Sparkles" },
+  { id: "All", labelTh: "ทั้งหมด (All)", labelEn: "All API", icon: "Layers", color: "#388BFD" },
+  { id: "World", labelTh: "โลก & Raycast (World)", labelEn: "World & Raycast", icon: "Globe", color: "#3FB950" },
+  { id: "Physics", labelTh: "ฟิสิกส์ & วัตถุ (Physics)", labelEn: "Physics & Welds", icon: "Boxes", color: "#D29922" },
+  { id: "GameLoop", labelTh: "เกมลูป & เวลา (Time)", labelEn: "Game Loop & Time", icon: "Timer", color: "#F0883E" },
+  { id: "Input", labelTh: "การควบคุม & อินพุต (Input)", labelEn: "Input & Controls", icon: "Keyboard", color: "#A371F7" },
+  { id: "Camera", labelTh: "มุมกล้อง (Camera)", labelEn: "Camera System", icon: "Camera", color: "#58A6FF" },
+  { id: "Network", labelTh: "เน็ตเวิร์ก & รีโมต (Network)", labelEn: "Network & Remotes", icon: "Network", color: "#DB61A2" },
+  { id: "Player", labelTh: "ตัวละคร & ผู้เล่น (Player)", labelEn: "Player & Character", icon: "User", color: "#2EA043" },
+  { id: "Animation", labelTh: "แอนิเมชัน & ทวีน (Tween)", labelEn: "Tween & Visuals", icon: "Sparkles", color: "#F778BA" },
 ] as const;

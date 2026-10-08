@@ -181,6 +181,32 @@ print("✨ หยุดหมุนเรียบร้อย ไม่กิ�
       "Create a normal Script in ServerScriptService to test require()",
     ],
     code: `--!strict
+-- 1. MathUtils.luau (ModuleScript ใน ReplicatedStorage)
+local MathUtils = {}
+
+function MathUtils.Round(num: number, decimals: number?): number
+    local mult = 10 ^ (decimals or 0)
+    return math.round(num * mult) / mult
+end
+
+function MathUtils.GetDistance(posA: Vector3, posB: Vector3): number
+    return (posA - posB).Magnitude
+end
+
+function MathUtils.GetRandomNeonColor(): Color3
+    local hue = math.random()
+    return Color3.fromHSV(hue, 0.85, 1)
+end
+
+return MathUtils`,
+    files: [
+      {
+        filename: "MathUtils.luau",
+        scriptType: "ModuleScript",
+        scriptLocation: "ReplicatedStorage",
+        descriptionTh: "ไฟล์ ModuleScript ที่รวบรวมฟังก์ชันคำนวณและส่งออกตาราง MathUtils",
+        descriptionEn: "Shared ModuleScript exporting vector and math helpers",
+        code: `--!strict
 -- [ไฟล์ที่ 1] ModuleScript ใน ReplicatedStorage (ชื่อ: MathUtils)
 
 local MathUtils = {}
@@ -202,22 +228,29 @@ function MathUtils.GetRandomNeonColor(): Color3
     return Color3.fromHSV(hue, 0.85, 1)
 end
 
-return MathUtils
-
----------------------------------------------------------------------
--- [ไฟล์ที่ 2] ตัวอย่างการเรียกใช้จาก Script ใน ServerScriptService:
----------------------------------------------------------------------
---[[
+return MathUtils`,
+      },
+      {
+        filename: "TestRunner.server.luau",
+        scriptType: "Script (Server)",
+        scriptLocation: "ServerScriptService",
+        descriptionTh: "สคริปต์ทดสอบเรียกใช้ require() นำโมดูล MathUtils มาใช้งานจริง",
+        descriptionEn: "Server script importing MathUtils via require() and running calculations",
+        code: `--!strict
+-- [ไฟล์ที่ 2] สคริปต์ใน ServerScriptService (ชื่อ: TestRunner)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local MathUtils = require(ReplicatedStorage:WaitForChild("MathUtils"))
+
+-- นำเข้า ModuleScript ด้วย require()
+local MathUtils = require(ReplicatedStorage:WaitForChild("MathUtils")) :: any
 
 local p1 = Vector3.new(0, 0, 0)
 local p2 = Vector3.new(10, 5, 20)
 local dist = MathUtils.GetDistance(p1, p2)
 
-print("ระยะทาง:", MathUtils.Round(dist, 2), "studs")
-print("สีสุ่ม:", MathUtils.GetRandomNeonColor())
---]]`,
+print("📏 ระยะห่างคำนวณได้:", MathUtils.Round(dist, 2), "studs")
+print("🎨 สุ่มสีนีออน:", MathUtils.GetRandomNeonColor())`,
+      },
+    ],
     expectedResultTh: "ModuleScript จะส่งออกตารางฟังก์ชันพร้อมใช้งาน และเมื่อ require ในสคริปต์หลักจะสามารถเรียก MathUtils.GetDistance ได้ทันที",
     expectedResultEn: "The ModuleScript exports utility functions cleanly, which are required and executed with zero duplication.",
     keyTakeawaysTh: [

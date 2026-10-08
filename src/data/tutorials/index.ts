@@ -7,6 +7,7 @@ import { COMBAT_LABS } from "./combat";
 import { NETWORKING_LABS } from "./networking";
 import { DATASTORE_LABS } from "./datastore";
 import { UI_LABS } from "./ui";
+import { FULLGAME_LABS } from "./fullgame";
 
 export * from "./types";
 export * from "./basics";
@@ -17,6 +18,7 @@ export * from "./combat";
 export * from "./networking";
 export * from "./datastore";
 export * from "./ui";
+export * from "./fullgame";
 
 export const TUTORIAL_LABS: TutorialLab[] = [
   ...BASICS_LABS,
@@ -27,4 +29,5 @@ export const TUTORIAL_LABS: TutorialLab[] = [
   ...NETWORKING_LABS,
   ...DATASTORE_LABS,
   ...UI_LABS,
+  ...FULLGAME_LABS,
 ];

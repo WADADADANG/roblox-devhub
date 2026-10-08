@@ -16,15 +16,18 @@ import {
   Sparkles,
   ExternalLink,
   BookOpen,
-  Cpu,
   GraduationCap,
   Bug,
   Terminal,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "@/lib/ThemeContext";
 
 import WikiViewer from "@/components/WikiViewer";
 import TutorialViewer from "@/components/TutorialViewer";
 import ChallengeArena from "@/components/ChallengeArena";
+import WikiHome from "@/components/WikiHome";
 import SimulatorPlayground, {
   LogEntry,
   InstanceNode,
@@ -33,25 +36,25 @@ import SimulatorPlayground, {
 
 // Icon mapper for categories
 const ICON_MAP: Record<string, React.ReactNode> = {
-  Layers: <Layers className="w-4 h-4" />,
-  Globe: <Globe className="w-4 h-4" />,
-  Boxes: <Boxes className="w-4 h-4" />,
-  Timer: <Timer className="w-4 h-4" />,
-  Keyboard: <Keyboard className="w-4 h-4" />,
-  Camera: <Camera className="w-4 h-4" />,
-  Network: <Network className="w-4 h-4" />,
-  User: <User className="w-4 h-4" />,
-  Sparkles: <Sparkles className="w-4 h-4" />,
+  Layers: <Layers className="w-3.5 h-3.5" />,
+  Globe: <Globe className="w-3.5 h-3.5" />,
+  Boxes: <Boxes className="w-3.5 h-3.5" />,
+  Timer: <Timer className="w-3.5 h-3.5" />,
+  Keyboard: <Keyboard className="w-3.5 h-3.5" />,
+  Camera: <Camera className="w-3.5 h-3.5" />,
+  Network: <Network className="w-3.5 h-3.5" />,
+  User: <User className="w-3.5 h-3.5" />,
+  Sparkles: <Sparkles className="w-3.5 h-3.5" />,
 };
 
-export type AppMode = "wiki" | "tutorials" | "challenges" | "simulator";
+export type AppMode = "home" | "wiki" | "tutorials" | "challenges" | "simulator";
 
 interface WikiAppProps {
   initialMode?: AppMode;
   initialId?: string;
 }
 
-export default function WikiApp({ initialMode = "wiki", initialId }: WikiAppProps) {
+export default function WikiApp({ initialMode = "home", initialId }: WikiAppProps) {
   const [lang, setLang] = useState<"th" | "en">("th");
   const [appMode, setAppMode] = useState<AppMode>(initialMode);
 
@@ -115,7 +118,9 @@ export default function WikiApp({ initialMode = "wiki", initialId }: WikiAppProp
       const mode = segs[0];
       const id = segs[1];
 
-      if (mode === "wiki") {
+      if (mode === "home" || !mode) {
+        setAppMode("home");
+      } else if (mode === "wiki") {
         setAppMode("wiki");
         if (id && WIKI_ENTRIES.some((e) => e.id === id)) {
           setActiveEntryId(id);
@@ -133,7 +138,7 @@ export default function WikiApp({ initialMode = "wiki", initialId }: WikiAppProp
       } else if (mode === "simulator") {
         setAppMode("simulator");
       } else {
-        setAppMode("wiki");
+        setAppMode("home");
       }
     };
 
@@ -141,11 +146,11 @@ export default function WikiApp({ initialMode = "wiki", initialId }: WikiAppProp
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  // Normalize bare root/section paths on initial load
+  // Normalize bare section paths on initial load (don't force overwrite root / with wiki)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const pathname = window.location.pathname;
-      if (pathname === "/" || pathname === "/wiki") {
+      if (pathname === "/wiki") {
         window.history.replaceState(null, "", `/wiki/${activeEntryId}`);
       } else if (pathname === "/labs" || pathname === "/tutorials") {
         window.history.replaceState(null, "", `/labs/${activeLabId}`);
@@ -165,7 +170,9 @@ export default function WikiApp({ initialMode = "wiki", initialId }: WikiAppProp
   // Mode navigation
   const handleSelectMode = (mode: AppMode) => {
     setAppMode(mode);
-    if (mode === "wiki") {
+    if (mode === "home") {
+      updateUrl("/");
+    } else if (mode === "wiki") {
       updateUrl(`/wiki/${activeEntryId}`);
     } else if (mode === "tutorials") {
       updateUrl(`/labs/${activeLabId}`);
@@ -297,99 +304,166 @@ export default function WikiApp({ initialMode = "wiki", initialId }: WikiAppProp
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
-    <div className="h-screen max-h-screen flex flex-col bg-[#07090E] dot-grid-bg text-slate-100 selection:bg-[#00F5D4]/20 selection:text-[#00F5D4] overflow-hidden">
+    <div className={`h-screen max-h-screen flex flex-col overflow-hidden ${
+      isDark ? "bg-[#0D1117] text-[#F0F6FC]" : "bg-[#FFFFFF] text-[#1F2328]"
+    }`}>
       {/* 1. TOP HEADER & APP MODE TABS */}
-      <header className="shrink-0 border-b border-[#1A2234] bg-[#07090E]/95 backdrop-blur-md px-4 sm:px-6">
-        <div className="h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00F5D4] via-[#0EA5E9] to-[#6366F1] flex items-center justify-center p-[1px] shadow-lg shadow-[#00F5D4]/15">
-              <div className="w-full h-full bg-[#090D16] rounded-[11px] flex items-center justify-center">
-                <Cpu className="w-5 h-5 text-[#00F5D4]" />
-              </div>
+      <header className={`shrink-0 border-b px-4 sm:px-6 transition-colors ${
+        isDark ? "border-[#30363D] bg-[#161B22]" : "border-[#D0D7DE] bg-[#F6F8FA]"
+      }`}>
+        <div className="h-14 flex items-center justify-between gap-4">
+          {/* Logo & Brand: Roblox DevHub */}
+          <button
+            onClick={() => handleSelectMode("home")}
+            className="flex items-center gap-3 shrink-0 text-left cursor-pointer group"
+          >
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm transition-all border shadow-xs group-hover:scale-105 ${
+              isDark
+                ? "bg-[#21262D] border-[#30363D] text-[#58A6FF]"
+                : "bg-[#0969DA] border-[#0969DA] text-white"
+            }`}>
+              <Boxes className="w-4 h-4" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold tracking-tight text-white font-mono text-base">
-                  ROBLOX<span className="text-[#00F5D4]">.DEVHUB</span>
+              <div className="flex items-center gap-2 leading-none">
+                <span className="font-bold tracking-tight font-mono text-base">
+                  ROBLOX<span className={isDark ? "text-[#58A6FF]" : "text-[#0969DA]"}>.DEVHUB</span>
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                {lang === "th"
-                  ? "Engine API Wiki • Hands-on Labs • Bug Arena • Luau Simulator"
-                  : "Roblox Engine Wiki • Hands-on Labs • Interactive Bug Arena"}
+              <p className={`text-[11px] hidden sm:block mt-0.5 ${
+                isDark ? "text-[#8B949E]" : "text-[#656D76]"
+              }`}>
+                Roblox Engine Wiki • Hands-on Labs • Bug Arena • Luau Playground
               </p>
             </div>
-          </div>
+          </button>
 
-          {/* 4 Main Mode Switchers in Header */}
-          <div className="hidden lg:flex items-center gap-1.5 bg-[#0F1424] p-1 rounded-xl border border-[#1C253B]">
+          {/* Mode Switchers in Header */}
+          <div className="hidden lg:flex items-center gap-1.5">
             <button
               onClick={() => handleSelectMode("wiki")}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 appMode === "wiki"
-                  ? "bg-[#00F5D4]/15 text-[#00F5D4] border border-[#00F5D4]/40 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? isDark
+                    ? "bg-[#1F242C] text-[#58A6FF] border border-[#388BFD]/40 font-semibold shadow-xs"
+                    : "bg-white text-[#0969DA] border border-[#D0D7DE] font-semibold shadow-xs"
+                  : isDark
+                    ? "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#21262D]"
+                    : "text-[#656D76] hover:text-[#1F2328] hover:bg-[#EAECEF]"
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>{lang === "th" ? "1. API Wiki" : "1. Engine Wiki"}</span>
+              <span>API Wiki</span>
             </button>
 
             <button
               onClick={() => handleSelectMode("tutorials")}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 appMode === "tutorials"
-                  ? "bg-[#38BDF8]/15 text-[#38BDF8] border border-[#38BDF8]/40 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? isDark
+                    ? "bg-[#1F242C] text-[#58A6FF] border border-[#388BFD]/40 font-semibold shadow-xs"
+                    : "bg-white text-[#0969DA] border border-[#D0D7DE] font-semibold shadow-xs"
+                  : isDark
+                    ? "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#21262D]"
+                    : "text-[#656D76] hover:text-[#1F2328] hover:bg-[#EAECEF]"
               }`}
             >
               <GraduationCap className="w-3.5 h-3.5" />
-              <span>{lang === "th" ? "2. Hands-on Labs" : "2. Hands-on Labs"}</span>
-              <span className="text-[10px] bg-[#38BDF8]/20 text-[#38BDF8] px-1.5 py-0.2 rounded-full">
+              <span>Hands-on Labs</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                appMode === "tutorials"
+                  ? isDark ? "bg-[#388BFD]/20 text-[#58A6FF]" : "bg-[#DDF4FF] text-[#0969DA]"
+                  : isDark ? "bg-[#21262D] text-[#8B949E]" : "bg-[#EAEEF2] text-[#656D76]"
+              }`}>
                 {completedLabs.length}/{TUTORIAL_LABS.length}
               </span>
             </button>
 
             <button
               onClick={() => handleSelectMode("challenges")}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 appMode === "challenges"
-                  ? "bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/40 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? isDark
+                    ? "bg-[#1F242C] text-[#58A6FF] border border-[#388BFD]/40 font-semibold shadow-xs"
+                    : "bg-white text-[#0969DA] border border-[#D0D7DE] font-semibold shadow-xs"
+                  : isDark
+                    ? "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#21262D]"
+                    : "text-[#656D76] hover:text-[#1F2328] hover:bg-[#EAECEF]"
               }`}
             >
               <Bug className="w-3.5 h-3.5" />
-              <span>{lang === "th" ? "3. Bug Arena" : "3. Bug Arena"}</span>
-              <span className="text-[10px] bg-[#F59E0B]/20 text-[#F59E0B] px-1.5 py-0.2 rounded-full">
+              <span>Bug Arena</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                appMode === "challenges"
+                  ? isDark ? "bg-[#388BFD]/20 text-[#58A6FF]" : "bg-[#DDF4FF] text-[#0969DA]"
+                  : isDark ? "bg-[#21262D] text-[#8B949E]" : "bg-[#EAEEF2] text-[#656D76]"
+              }`}>
                 {solvedChallenges.length}/{CODE_CHALLENGES.length}
               </span>
             </button>
 
             <button
               onClick={() => handleSelectMode("simulator")}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 appMode === "simulator"
-                  ? "bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/40 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? isDark
+                    ? "bg-[#1F242C] text-[#58A6FF] border border-[#388BFD]/40 font-semibold shadow-xs"
+                    : "bg-white text-[#0969DA] border border-[#D0D7DE] font-semibold shadow-xs"
+                  : isDark
+                    ? "text-[#8B949E] hover:text-[#F0F6FC] hover:bg-[#21262D]"
+                    : "text-[#656D76] hover:text-[#1F2328] hover:bg-[#EAECEF]"
               }`}
             >
-              <Terminal className="w-3.5 h-3.5 text-[#10B981]" />
-              <span>{lang === "th" ? "4. ⚡ Luau Playground" : "4. Luau Simulator"}</span>
-              <span className="text-[10px] bg-[#10B981]/20 text-[#10B981] px-1.5 py-0.2 rounded-full font-mono">
+              <Terminal className="w-3.5 h-3.5" />
+              <span>Luau Playground</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold ${
+                isDark ? "bg-[#238636]/20 text-[#3FB950]" : "bg-[#DAFBE1] text-[#1A7F37]"
+              }`}>
                 Lune
               </span>
             </button>
           </div>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-2.5">
+          {/* Right Actions: Theme Toggle, Language, Roblox Docs */}
+          <div className="flex items-center gap-2">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
+                isDark
+                  ? "bg-[#21262D] border-[#30363D] text-[#F0F6FC] hover:bg-[#30363D]"
+                  : "bg-white border-[#D0D7DE] text-[#1F2328] hover:bg-[#F3F4F6]"
+              }`}
+              title={isDark ? "เปลี่ยนเป็นธีมสว่าง (Light Mode)" : "เปลี่ยนเป็นธีมมืด (Dark Mode)"}
+            >
+              {isDark ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">ธีมสว่าง</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-slate-700" />
+                  <span className="hidden sm:inline">ธีมมืด</span>
+                </>
+              )}
+            </button>
+
+            {/* Language Switch */}
             <button
               onClick={() => setLang(lang === "th" ? "en" : "th")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#111726] border border-[#1E293F] text-xs font-medium text-slate-300 hover:text-white hover:border-[#00F5D4]/40 transition-all cursor-pointer shadow-sm"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                isDark
+                  ? "bg-[#21262D] border-[#30363D] text-[#F0F6FC] hover:bg-[#30363D]"
+                  : "bg-white border-[#D0D7DE] text-[#1F2328] hover:bg-[#F3F4F6]"
+              }`}
               title="Switch Language"
             >
-              <Globe className="w-3.5 h-3.5 text-[#00F5D4]" />
+              <Globe className="w-3.5 h-3.5 text-[#58A6FF]" />
               <span>{lang === "th" ? "🇹🇭 TH" : "🇬🇧 EN"}</span>
             </button>
 
@@ -397,75 +471,110 @@ export default function WikiApp({ initialMode = "wiki", initialId }: WikiAppProp
               href="https://create.roblox.com/docs/reference/engine"
               target="_blank"
               rel="noreferrer"
-              className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#111726] border border-[#1E293F] text-xs font-medium text-slate-400 hover:text-white hover:border-slate-600 transition-all"
+              className={`hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                isDark
+                  ? "bg-[#21262D] border-[#30363D] text-[#8B949E] hover:text-white"
+                  : "bg-white border-[#D0D7DE] text-[#656D76] hover:text-[#1F2328]"
+              }`}
             >
-              <span>Roblox Engine</span>
-              <ExternalLink className="w-3 h-3 text-slate-500" />
+              <span>Roblox Docs</span>
+              <ExternalLink className="w-3 h-3 opacity-60" />
             </a>
           </div>
         </div>
 
         {/* Mobile App Mode Tabs */}
-        <div className="flex lg:hidden items-center justify-between border-t border-[#141B2B] py-2 gap-1 overflow-x-auto no-scrollbar">
+        <div className={`flex lg:hidden items-center justify-between border-t py-2 gap-1.5 overflow-x-auto no-scrollbar ${
+          isDark ? "border-[#30363D]" : "border-[#D0D7DE]"
+        }`}>
           <button
             onClick={() => handleSelectMode("wiki")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs whitespace-nowrap font-medium ${
               appMode === "wiki"
-                ? "bg-[#00F5D4]/15 text-[#00F5D4] border border-[#00F5D4]/40"
-                : "text-slate-400"
+                ? isDark ? "bg-[#388BFD]/20 text-[#58A6FF]" : "bg-[#DDF4FF] text-[#0969DA]"
+                : isDark ? "text-[#8B949E]" : "text-[#656D76]"
             }`}
           >
             <BookOpen className="w-3 h-3" />
-            <span>{lang === "th" ? "1. API Wiki" : "1. Wiki"}</span>
+            <span>Wiki</span>
           </button>
           <button
             onClick={() => handleSelectMode("tutorials")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs whitespace-nowrap font-medium ${
               appMode === "tutorials"
-                ? "bg-[#38BDF8]/15 text-[#38BDF8] border border-[#38BDF8]/40"
-                : "text-slate-400"
+                ? isDark ? "bg-[#388BFD]/20 text-[#58A6FF]" : "bg-[#DDF4FF] text-[#0969DA]"
+                : isDark ? "text-[#8B949E]" : "text-[#656D76]"
             }`}
           >
             <GraduationCap className="w-3 h-3" />
-            <span>{lang === "th" ? "2. Labs" : "2. Labs"}</span>
-            <span className="text-[10px] bg-[#38BDF8]/20 text-[#38BDF8] px-1 rounded-full">
-              {completedLabs.length}
-            </span>
+            <span>Labs ({completedLabs.length})</span>
           </button>
           <button
             onClick={() => handleSelectMode("challenges")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs whitespace-nowrap font-medium ${
               appMode === "challenges"
-                ? "bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/40"
-                : "text-slate-400"
+                ? isDark ? "bg-[#388BFD]/20 text-[#58A6FF]" : "bg-[#DDF4FF] text-[#0969DA]"
+                : isDark ? "text-[#8B949E]" : "text-[#656D76]"
             }`}
           >
             <Bug className="w-3 h-3" />
-            <span>{lang === "th" ? "3. Bug Arena" : "3. Bug Arena"}</span>
-            <span className="text-[10px] bg-[#F59E0B]/20 text-[#F59E0B] px-1 rounded-full">
-              {solvedChallenges.length}
-            </span>
+            <span>Bugs ({solvedChallenges.length})</span>
           </button>
           <button
             onClick={() => handleSelectMode("simulator")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs whitespace-nowrap font-medium ${
               appMode === "simulator"
-                ? "bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/40"
-                : "text-slate-400"
+                ? isDark ? "bg-[#388BFD]/20 text-[#58A6FF]" : "bg-[#DDF4FF] text-[#0969DA]"
+                : isDark ? "text-[#8B949E]" : "text-[#656D76]"
             }`}
           >
-            <Terminal className="w-3 h-3 text-[#10B981]" />
-            <span>{lang === "th" ? "4. Playground" : "4. Playground"}</span>
+            <Terminal className="w-3 h-3" />
+            <span>Playground</span>
           </button>
         </div>
       </header>
 
       {/* ========================================================================= */}
-      {/* 4 MODULAR APP VIEWS                                                       */}
+      {/* 5 MODULAR APP VIEWS                                                       */}
       {/* ========================================================================= */}
+      {appMode === "home" && (
+        <WikiHome
+          categories={CATEGORIES}
+          entries={WIKI_ENTRIES}
+          labs={TUTORIAL_LABS}
+          challenges={CODE_CHALLENGES}
+          onNavigateWiki={(entryId, categoryId) => {
+            if (categoryId) setSelectedCategory(categoryId);
+            if (entryId) setActiveEntryId(entryId);
+            handleSelectMode("wiki");
+          }}
+          onNavigateLabs={(labId) => {
+            if (labId) setActiveLabId(labId);
+            handleSelectMode("tutorials");
+          }}
+          onNavigateChallenges={(challengeId) => {
+            if (challengeId) setActiveChallengeId(challengeId);
+            handleSelectMode("challenges");
+          }}
+          onNavigateSimulator={(code) => {
+            if (code) {
+              openInSimulator(code);
+            } else {
+              handleSelectMode("simulator");
+            }
+          }}
+          onSearch={(query) => {
+            setSearchQuery(query);
+            setSelectedCategory("All");
+          }}
+          lang={lang}
+        />
+      )}
+
       {appMode === "wiki" && (
         <WikiViewer
           entries={filteredEntries}
+          allEntries={WIKI_ENTRIES}
           activeEntryId={activeEntryId}
           onSelectEntry={handleSelectEntry}
           categories={CATEGORIES}
@@ -516,21 +625,21 @@ export default function WikiApp({ initialMode = "wiki", initialId }: WikiAppProp
       )}
 
       {appMode === "simulator" && (
-        <main className="flex-1 h-full overflow-y-auto p-4 sm:p-8 lg:p-10 min-h-0 dot-grid-bg">
-          <div className="w-full max-w-4xl xl:max-w-5xl 2xl:max-w-6xl mx-auto">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 min-h-0">
+          <div className="max-w-7xl mx-auto">
             <SimulatorPlayground
               code={simCode}
               setCode={setSimCode}
-              onRun={() => runSimulator()}
-              isRunning={simIsRunning}
               logs={simLogs}
               explorer={simExplorer}
-              executionTime={simExecutionTime}
-              lang={lang}
+              isRunning={simIsRunning}
+              onRun={() => runSimulator()}
               onClearLogs={() => setSimLogs([])}
+              lang={lang}
+              executionTime={simExecutionTime}
             />
           </div>
-        </main>
+        </div>
       )}
     </div>
   );

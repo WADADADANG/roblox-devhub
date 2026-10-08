@@ -6,7 +6,8 @@ export type LabCategory =
   | "Combat"
   | "Networking"
   | "DataStore"
-  | "UI";
+  | "UI"
+  | "FullGame";
 
 export interface TutorialCategory {
   id: string;
@@ -14,6 +15,15 @@ export interface TutorialCategory {
   labelEn: string;
   icon: string;
   color: string;
+}
+
+export interface LabFile {
+  filename: string;
+  scriptType: "Script (Server)" | "LocalScript (Client)" | "ModuleScript";
+  scriptLocation: "ServerScriptService" | "StarterPlayerScripts" | "ReplicatedStorage" | "StarterGui";
+  code: string;
+  descriptionTh?: string;
+  descriptionEn?: string;
 }
 
 export interface TutorialLab {
@@ -35,6 +45,7 @@ export interface TutorialLab {
   scriptType: "Script (Server)" | "LocalScript (Client)" | "ModuleScript";
   scriptLocation: "ServerScriptService" | "StarterPlayerScripts" | "ReplicatedStorage" | "StarterGui";
   code: string;
+  files?: LabFile[];
   expectedResultTh: string;
   expectedResultEn: string;
   keyTakeawaysTh: string[];
@@ -43,6 +54,7 @@ export interface TutorialLab {
 
 export const TUTORIAL_CATEGORIES: TutorialCategory[] = [
   { id: "All", labelTh: "ทั้งหมด (All)", labelEn: "All Labs", icon: "Layers", color: "#38BDF8" },
+  { id: "FullGame", labelTh: "โปรเจกต์สร้างเกมจริง", labelEn: "Full Game Projects", icon: "Gamepad2", color: "#10B981" },
   { id: "Basics", labelTh: "พื้นฐาน & สถาปัตยกรรม", labelEn: "Basics & Architecture", icon: "Cpu", color: "#00F5D4" },
   { id: "Building", labelTh: "ระบบสร้าง & 3D Math", labelEn: "Building & 3D Math", icon: "Boxes", color: "#38BDF8" },
   { id: "Physics", labelTh: "ฟิสิกส์ & รอยต่อ", labelEn: "Physics & Welds", icon: "Zap", color: "#F59E0B" },

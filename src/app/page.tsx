@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootPage() {
-  return <WikiApp initialMode="wiki" initialId="workspace-raycast" />;
+  return <WikiApp initialMode="home" />;
 }
