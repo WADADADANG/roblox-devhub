@@ -2,11 +2,105 @@ import { WikiEntry } from "./types";
 
 export const WORLD_ENTRIES: WikiEntry[] = [
   {
+    id: "cframe-lookat",
+    name: "CFrame.lookAt",
+    category: "World",
+    kind: "Method",
+    summaryTh: "สร้างพิกัด CFrame พร้อมคำนวณมุมหันหน้า (Rotation) ให้หันไปยังเป้าหมายโดยตรง (ใช้สำหรับเล็งปืน, หันหน้าตัวละคร, วางบล็อก)",
+    summaryEn: "Creates a CFrame at the given origin position, oriented towards the target position.",
+    syntax: "local cf = CFrame.lookAt(at: Vector3, lookAt: Vector3, upVector: Vector3?): CFrame",
+    useCases: ["หันหน้าโมเดลศัตรู/บอทไปหาผู้เล่น", "เล็งปากกระบอกปืนไปยังจุดที่เมาส์ชี้", "สร้างลูกไฟ/กระสุนพุ่งไปข้างหน้า", "จัดมุมกล้อง Cutscene"],
+    arguments: [
+      {
+        name: "at",
+        type: "Vector3",
+        required: true,
+        descTh: "ตำแหน่งพิกัดจุดกำเนิดของวัตถุ",
+        descEn: "Position in 3D world space.",
+      },
+      {
+        name: "lookAt",
+        type: "Vector3",
+        required: true,
+        descTh: "ตำแหน่งพิกัดเป้าหมายที่ต้องการให้หันหน้าไปหา",
+        descEn: "Target position in 3D world space to face towards.",
+      },
+      {
+        name: "upVector",
+        type: "Vector3?",
+        required: false,
+        descTh: "ทิศทางตั้งฉากด้านบน (ค่าเริ่มต้นคือ Vector3.new(0, 1, 0))",
+        descEn: "Optional up direction vector, defaults to Vector3.yAxis.",
+      },
+    ],
+    returns: [
+      {
+        type: "CFrame",
+        descTh: "เมทริกซ์ CFrame ที่มีทั้งพิกัดตำแหน่งและมุมหมุน",
+        descEn: "Constructed CFrame coordinate matrix.",
+      },
+    ],
+    examples: [
+      {
+        titleTh: "ระบบเล็งศัตรูให้หันหน้ามาสบตาผู้เล่น (Enemy Face Player AI)",
+        titleEn: "Enemy Face Player AI",
+        tab: "Server",
+        scenarioTh: "หมุนตัวละครศัตรูให้หันหน้าไปหาผู้เล่นที่อยู่ใกล้ที่สุด",
+        scenarioEn: "Orient monster model toward target player character.",
+        code: `local function aimAtTarget(monster: Model, targetPos: Vector3)
+    local rootPart = monster:FindFirstChild("HumanoidRootPart") :: BasePart
+    if not rootPart then return end
+
+    -- รักษาระดับความสูงแกน Y เดิมของมอนสเตอร์ เพื่อไม่ให้ตัวเอียงแหงนหน้า
+    local originPos = rootPart.Position
+    local flatTarget = Vector3.new(targetPos.X, originPos.Y, targetPos.Z)
+
+    -- คำนวณ CFrame หันหน้า
+    rootPart.CFrame = CFrame.lookAt(originPos, flatTarget)
+    print("มอนสเตอร์หันหน้าไปหาเป้าหมาย!")
+end`,
+        explanationTh: "CFrame.lookAt ช่วยลดความยุ่งยากในการคำนวณตรีโกณมิติหรือ atan2 ด้วยตนเองอย่างสิ้นเชิง",
+        explanationEn: "Replaces complex trigonometric azimuth / pitch calculations with a single clean constructor call.",
+      },
+    ],
+    tipsTh: [
+      "หากไม่ต้องการให้ตัวละครแหงนหน้าขึ้นฟ้าหรือก้มลงดิน ให้ปรับค่า Y ของเป้าหมายให้เท่ากับค่า Y ของจุดเริ่มต้น",
+      "มีคุณสมบัติ `.LookVector` ที่ดึงทิศทางพุ่งไปข้างหน้ามาคูณความเร็วทำเป็นกระสุนปืนได้ทันที",
+    ],
+    tipsEn: [
+      "Keep target Y value equal to origin Y to prevent unwanted vertical pitch tilting.",
+      "Read .LookVector property directly to acquire forward velocity vectors.",
+    ],
+    related: ["workspace-raycast", "tweenservice-create"],
+  },
+  {
     id: "workspace-raycast",
     name: "Workspace:Raycast",
     category: "World",
     kind: "Method",
     mtaEquivalent: "processLineOfSight()",
+    platformEquivalents: [
+      {
+        platform: "Unity (C#)",
+        code: "Physics.Raycast(origin, dir, out hit)",
+        notesTh: "ยิงลำแสงฟิสิกส์ตรวจจับ Collider",
+      },
+      {
+        platform: "Unreal Engine (C++)",
+        code: "GetWorld()->LineTraceSingleByChannel()",
+        notesTh: "ตรวจจับการชนตาม Collision Channel",
+      },
+      {
+        platform: "Godot (GDScript)",
+        code: "space_state.intersect_ray(query)",
+        notesTh: "ยิงเรย์ผ่าน PhysicsDirectSpaceState3D",
+      },
+      {
+        platform: "FiveM (Lua/JS)",
+        code: "StartShapeTestRay() / GetShapeTestResult()",
+        notesTh: "สร้างและดึงผลลัพธ์ Shape Test Ray",
+      },
+    ],
     summaryTh: "ยิงลำแสง 3 มิติจากจุดเริ่มต้นไปยังทิศทางที่กำหนด เพื่อตรวจจับการชน พื้นผิวสัมผัส และวัตถุที่โดนยิง",
     summaryEn: "Casts a 3D ray from origin in a specific direction vector to detect collisions, hit surface normals, and intersected parts.",
     syntax: "local result = Workspace:Raycast(origin: Vector3, direction: Vector3, raycastParams: RaycastParams?): RaycastResult?",

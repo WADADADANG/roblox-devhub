@@ -2,6 +2,122 @@ import { TutorialLab } from "./types";
 
 export const BASICS_LABS: TutorialLab[] = [
   {
+    id: "lab-1-0",
+    category: "Basics",
+    phaseId: 1,
+    phaseTitleTh: "Phase 1: พื้นฐานเอนจิน & DataModel",
+    phaseTitleEn: "Phase 1: Engine Fundamentals & DataModel",
+    titleTh: "Lab 1.0: ไวยากรณ์ Luau Syntax & การใช้จุด (.) กับ โคลอน (:)",
+    titleEn: "Lab 1.0: Luau Syntax Foundations & Dot (.) vs Colon (:)",
+    difficulty: "Beginner",
+    durationMin: 10,
+    summaryTh:
+      "ปูพื้นฐานไวยากรณ์ภาษา Luau สำหรับ Roblox ตั้งแต่ศูนย์: ตัวแปร (local), ประเภทข้อมูล (Data Types), โครงสร้างเงื่อนไข, ความแตกต่างระหว่างจุด (.) อ่าน Property กับโคลอน (:) เรียก Method และการเขียนฟังก์ชัน",
+    summaryEn:
+      "Master essential Luau syntax foundations: variables, type annotations, condition blocks, functions, and the crucial distinction between Dot (.) for properties and Colon (:) for methods.",
+    mentalModelTh:
+      "กฎเหล็ก 2 ข้อที่ต้องจำ: 1) จุด (.) ใช้สำหรับ 'เข้าถึงคุณสมบัติหรือลูก' เช่น part.Name หรือ part.Parent 2) โคลอน (:) ใช้สำหรับ 'สั่งให้ทำกริยา (Method)' เช่น part:Destroy() หรือ workspace:Raycast() เพราะเครื่องหมายโคลอนจะส่งตัววัตถุ (self) เข้าไปในฟังก์ชันให้โดยอัตโนมัติ",
+    mentalModelEn:
+      "Two golden rules: Use Dot (.) to access properties and children (e.g., part.Size, part.Parent). Use Colon (:) when commanding actions/methods (e.g., part:Destroy(), workspace:Raycast()) because colon automatically passes 'self' into the call.",
+    stepsTh: [
+      "1. ประกาศตัวแปรประเภทต่างๆ (string, number, boolean, table) พร้อม Type Annotations",
+      "2. เขียนฟังก์ชันคำนวณและคืนค่า (Functions & Return)",
+      "3. เปรียบเทียบความแตกต่างระหว่าง Dot (.) กับ Colon (:) บน Instance จริง",
+      "4. ทดลองวนลูป Array และ Dictionary ด้วย for-in loop ยุคใหม่",
+    ],
+    stepsEn: [
+      "1. Declare primitive types with strict Luau annotations.",
+      "2. Write reusable calculation functions with typed returns.",
+      "3. Demonstrate the practical difference between Dot (.) and Colon (:).",
+      "4. Iterate tables and dictionaries using generalized iteration.",
+    ],
+    scriptType: "Script (Server)",
+    scriptLocation: "ServerScriptService",
+    code: `--!strict
+-- Lab 1.0: Luau Syntax & Core Grammar Masterclass`,
+    files: [
+      {
+        filename: "SyntaxBasics.server.luau",
+        scriptType: "Script (Server)",
+        scriptLocation: "ServerScriptService",
+        descriptionTh: "สรุปไวยากรณ์หลักทั้งหมด ตัวแปร ฟังก์ชัน ลูป และการใช้ . vs :",
+        descriptionEn: "Complete breakdown of Luau primitives, method dispatch, and tables.",
+        code: `--!strict
+-- ==========================================
+-- 1. ตัวแปรและประเภทข้อมูลพื้นฐาน (Data Types)
+-- ==========================================
+local playerName: string = "HeroPlayer"     -- ข้อความ (string)
+local playerCoins: number = 250             -- ตัวเลข (number)
+local isVipMember: boolean = true           -- บูลีน (boolean)
+local inventory: {string} = {"Sword", "Shield", "Potion"} -- ตาราง Array
+
+print("👤 ผู้เล่น:", playerName, "| เหรียญ:", playerCoins)
+
+-- ==========================================
+-- 2. ฟังก์ชันและการคำนวณ (Functions & Math)
+-- ==========================================
+local function calculateBonus(coins: number, multiplier: number): number
+    return coins * multiplier
+end
+
+local finalCoins = calculateBonus(playerCoins, 2)
+print("💰 เหรียญหลังคูณ 2 เท่า:", finalCoins)
+
+-- ==========================================
+-- 3. ความลับของ จุด (.) vs โคลอน (:)
+-- ==========================================
+local testPart = Instance.new("Part")
+
+-- ❌ กฎการใช้จุด (.): ใช้เมื่อ "อ่านหรือเขียนค่า Property" หรือ "เข้าถึงลูก"
+testPart.Name = "SyntaxTestPart"     -- จุด: กำหนดชื่อ
+testPart.Anchored = true             -- จุด: แก้ไข Property
+testPart.Size = Vector3.new(4, 2, 4) -- จุด: กำหนดขนาด
+
+-- ❌ กฎการใช้โคลอน (:): ใช้เมื่อ "สั่งการทำงาน (Call Method)"
+-- testPart:Destroy() มีค่าเท่ากับ testPart.Destroy(testPart)
+-- โคลอนจะส่งตัวมันเอง (self) เข้าไปทำงานให้อัตโนมัติ
+print("เรียกใช้งาน Method ด้วยโคลอน :IsA ->", testPart:IsA("BasePart"))
+
+-- ==========================================
+-- 4. การวนลูปตาราง (Loops & Tables)
+-- ==========================================
+-- การลูป Array (เรียงลำดับ index 1, 2, 3)
+for index, itemName in ipairs(inventory) do
+    print(string.format("  [%d] ไอเทมในกระเป๋า: %s", index, itemName))
+end
+
+-- การลูป Dictionary (คู่ Key-Value)
+local playerStats = {
+    Strength = 15,
+    Defense = 10,
+    Speed = 16,
+}
+
+for statName, statValue in pairs(playerStats) do
+    print(string.format("  สเตตัส %s: %d", statName, statValue))
+end
+
+-- เคลียร์ Part ทิ้งหลังทดสอบเสร็จ
+testPart:Destroy()
+print("✅ จบการทดสอบ Lab 1.0 สำเร็จ 100%!")`,
+      },
+    ],
+    expectedResultTh:
+      "ในหน้าต่าง Output จะแสดงผลลัพธ์การคำนวณตัวเลข รายชื่อไอเทมในกระเป๋า สเตตัสของผู้เล่น และคำอธิบายความแตกต่างของ . vs : อย่างชัดเจนโดยไม่มี Error",
+    expectedResultEn:
+      "Output logs cleanly display variable states, mathematical outputs, table iterations, and successful method invocations with zero runtime warnings.",
+    keyTakeawaysTh: [
+      "เครื่องหมาย . ใช้สำหรับ Property (เช่น part.Transparency) และการเข้าถึงลูก (เช่น workspace.Baseplate)",
+      "เครื่องหมาย : ใช้สำหรับ Method (เช่น part:Destroy() หรือ workspace:Raycast())",
+      "ใช้ local เสมอในการประกาศตัวแปร เพื่อป้องกันปัญหา Global Scope มั่วข้ามสคริปต์",
+    ],
+    keyTakeawaysEn: [
+      "Dot (.) indexes properties and child objects directly.",
+      "Colon (:) invokes object methods while passing 'self' implicitly.",
+      "Always prefix variables with 'local' to prevent global environment leakage.",
+    ],
+  },
+  {
     id: "lab-1-1",
     category: "Basics",
     phaseId: 1,

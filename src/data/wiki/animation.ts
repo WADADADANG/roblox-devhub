@@ -155,4 +155,69 @@ end`,
     ],
     related: ["instance-destroy", "task-spawn"],
   },
+  {
+    id: "animator-loadanimation",
+    name: "Animator:LoadAnimation",
+    category: "Animation",
+    kind: "Method",
+    summaryTh: "โหลดไฟล์ Animation เข้าสู่ตัวละคร เพื่อเล่นท่าทางต่างๆ (เช่น ฟันดาบ, ยิงปืน, กระโดด, ท่าเต้น)",
+    summaryEn: "Loads an Animation into the Animator, returning an AnimationTrack for playback.",
+    syntax: "local track = animator:LoadAnimation(animation: Animation): AnimationTrack\ntrack:Play()",
+    useCases: ["เล่นท่าฟันดาบ / ยิงปืนเมื่อกดคลิก", "เล่นท่าร่ายเวทมนตร์หรือชาร์จพลัง", "ท่าเต้น Emote", "ท่าเดินหรือวิ่งเฉพาะตัว (Custom Walk/Run)"],
+    arguments: [
+      {
+        name: "animation",
+        type: "Animation",
+        required: true,
+        descTh: "อ็อบเจกต์ Animation ที่ใส่ AnimationId (เช่น rbxassetid://12345678)",
+        descEn: "Animation instance holding the target AnimationId asset.",
+      },
+    ],
+    returns: [
+      {
+        type: "AnimationTrack",
+        descTh: "AnimationTrack ที่สามารถสั่ง :Play(), :Stop(), ปรับความเร็ว :AdjustSpeed() ได้",
+        descEn: "AnimationTrack controller instance.",
+      },
+    ],
+    examples: [
+      {
+        titleTh: "ระบบเล่นท่าฟันดาบเมื่อถืออาวุธ (Melee Attack Animation)",
+        titleEn: "Sword Slash Animation Playback",
+        tab: "Client",
+        scenarioTh: "โหลดท่าฟันดาบจาก Tool แล้วเล่นทันทีเมื่อผู้เล่นคลิกโจมตี",
+        scenarioEn: "Load attack track and play it on tool activation.",
+        code: `local Tool = script.Parent
+local slashAnim = Tool:WaitForChild("SlashAnimation") :: Animation
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local animator = humanoid:WaitForChild("Animator") :: Animator
+
+-- 1. โหลดท่าเตรียมไว้ล่วงหน้า
+local slashTrack = animator:LoadAnimation(slashAnim)
+slashTrack.Priority = Enum.AnimationPriority.Action
+
+-- 2. สั่งเล่นท่าเมื่อคลิกใช้งาน
+Tool.Activated:Connect(function()
+    if not slashTrack.IsPlaying then
+        slashTrack:Play()
+        print("🗡️ กำลังเล่นท่าฟันดาบ!")
+    end
+end)`,
+        explanationTh: "ควรโหลดท่าเก็บไว้ในตัวแปรล่วงหน้า ไม่ควรสั่ง LoadAnimation ใหม่ทุกครั้งที่คลิกฟันเพื่อความลื่นไหล",
+        explanationEn: "Preload the track once and invoke :Play() on demand to eliminate replication hitching.",
+      },
+    ],
+    tipsTh: [
+      "ควรโหลดผ่าน `Humanoid.Animator` เสมอ (ไม่ใช่สั่งโหลดตรงๆ กับ Humanoid เพราะตกรุ่นแล้ว)",
+      "ตั้งค่า `track.Priority = Enum.AnimationPriority.Action` เพื่อให้ท่าแอ็กชันทับท่าเดินปกติได้แนบเนียน",
+    ],
+    tipsEn: [
+      "Always call :LoadAnimation() on the Animator object rather than deprecated Humanoid methods.",
+      "Assign AnimationPriority.Action to ensure custom strikes override base walking rigs.",
+    ],
+    related: ["tool-activated", "tweenservice-create"],
+  },
 ];

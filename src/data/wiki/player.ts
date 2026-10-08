@@ -131,4 +131,68 @@ end`,
     ],
     related: ["players-playeradded", "basepart-touched"],
   },
+  {
+    id: "player-characteradded",
+    name: "Player.CharacterAdded",
+    category: "Player",
+    kind: "Event",
+    summaryTh: "Event ดักจับเมื่อโมเดลตัวละครเกิดใหม่ (Spawn หรือ Respawn) เป็นจุดเริ่มต้นสำหรับแจกอาวุธและผูกสคริปต์ควบคุมตัวละคร",
+    summaryEn: "Fires whenever a player's character model spawns or respawns into the workspace.",
+    syntax: "player.CharacterAdded:Connect(function(character: Model): ())\n-- หรือรอตัวละครโหลด:\nlocal character = player.Character or player.CharacterAdded:Wait()",
+    useCases: ["แจกอาวุธเริ่มต้นเข้ากระเป๋าเมื่อผู้เล่นเกิด", "ปรับแต่งค่าพลังเดิน (WalkSpeed) หรือกระโดด (JumpHeight)", "ทำเอฟเฟกต์วาร์ปหรือเกราะอมตะชั่วคราวตอนเกิด", "ผูกกล้อง Client ให้ติดตามตัวละคร"],
+    arguments: [
+      {
+        name: "character",
+        type: "Model",
+        required: true,
+        descTh: "โมเดลตัวละครของผู้เล่นที่เพิ่งโหลดเข้าสู่ Workspace",
+        descEn: "The newly spawned character model.",
+      },
+    ],
+    returns: [
+      {
+        type: "RBXScriptConnection",
+        descTh: "การเชื่อมต่อ Event",
+        descEn: "Event connection handle.",
+      },
+    ],
+    examples: [
+      {
+        titleTh: "ระบบแจกอุปกรณ์และตั้งค่าเลือดตอนเกิด (Spawn Kit Setup)",
+        titleEn: "Spawn Kit & Stat Initialization",
+        tab: "Server",
+        scenarioTh: "รอให้ตัวละครเกิด แล้วแจกดาบพร้อมตั้งค่าความเร็วการเดิน",
+        scenarioEn: "Give starting gear and boost walk speed every time player respawns.",
+        code: `local Players = game:GetService("Players")
+local ServerStorage = game:GetService("ServerStorage")
+
+local starterSword = ServerStorage:WaitForChild("ClassicSword")
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        print("ตัวละครเกิดแล้ว:", character.Name)
+
+        -- รอให้ Humanoid โหลดเสร็จอย่างปลอดภัย
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid.WalkSpeed = 20 -- ปรับความเร็วเดิน
+
+        -- แจกดาบเข้ากระเป๋า Backpack
+        local backpack = player:WaitForChild("Backpack")
+        starterSword:Clone().Parent = backpack
+    end)
+end)`,
+        explanationTh: "CharacterAdded จะยิงซ้ำทุกครั้งที่ผู้เล่นตายแล้วเกิดใหม่ ทำให้สเตตัสและของเริ่มต้นกลับมาเสมอ",
+        explanationEn: "Fires consistently on initial spawn and every subsequent respawn after death.",
+      },
+    ],
+    tipsTh: [
+      "ในฝั่ง LocalScript ให้ใช้ท่า `local character = player.Character or player.CharacterAdded:Wait()` เพื่อป้องกันตัวแปร character เป็น nil",
+      "ควรรอให้ Humanoid โหลดด้วย `:WaitForChild('Humanoid')` ก่อนปรับค่าพลังเสมอ",
+    ],
+    tipsEn: [
+      "On Client scripts, always use: local char = player.Character or player.CharacterAdded:Wait()",
+      "Always call :WaitForChild('Humanoid') before modifying stats to ensure proper replication.",
+    ],
+    related: ["players-playeradded", "humanoid-died"],
+  },
 ];

@@ -21,6 +21,11 @@ import {
   Terminal,
   Sun,
   Moon,
+  Database,
+  Swords,
+  Package,
+  Volume2,
+  Coins,
 } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 
@@ -37,6 +42,11 @@ import SimulatorPlayground, {
 // Icon mapper for categories
 const ICON_MAP: Record<string, React.ReactNode> = {
   Layers: <Layers className="w-3.5 h-3.5" />,
+  Database: <Database className="w-3.5 h-3.5" />,
+  Swords: <Swords className="w-3.5 h-3.5" />,
+  Package: <Package className="w-3.5 h-3.5" />,
+  Volume2: <Volume2 className="w-3.5 h-3.5" />,
+  Coins: <Coins className="w-3.5 h-3.5" />,
   Globe: <Globe className="w-3.5 h-3.5" />,
   Boxes: <Boxes className="w-3.5 h-3.5" />,
   Timer: <Timer className="w-3.5 h-3.5" />,

@@ -387,6 +387,63 @@ export default function WikiViewer({
                   ))}
                 </div>
               )}
+
+              {/* Cross-Platform Comparison Box (MTA:SA, Unity, Unreal, Godot) */}
+              {(activeEntry.mtaEquivalent || (activeEntry.platformEquivalents && activeEntry.platformEquivalents.length > 0)) && (
+                <div className={`mt-3 p-3.5 rounded-lg border text-xs space-y-2 ${
+                  isDark
+                    ? "bg-[#161B22]/80 border-[#30363D] text-[#C9D1D9]"
+                    : "bg-[#F6F8FA] border-[#D0D7DE] text-[#24292F]"
+                }`}>
+                  <div className="flex items-center gap-2 font-semibold">
+                    <span className="text-[#58A6FF]">🌐</span>
+                    <span className={isDark ? "text-[#58A6FF]" : "text-[#0969DA]"}>
+                      {lang === "th" ? "เปรียบเทียบกับ Game Engine & Platform อื่น:" : "Cross-Platform Equivalents:"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
+                    {/* MTA:SA fallback */}
+                    {activeEntry.mtaEquivalent && (
+                      <div className={`p-2 rounded border font-mono ${
+                        isDark ? "bg-[#0D1117] border-[#30363D]" : "bg-white border-[#D0D7DE]"
+                      }`}>
+                        <div className="text-[10px] font-sans text-amber-500 font-bold mb-0.5">MTA:SA (Lua)</div>
+                        <div className={`text-[11px] font-semibold ${isDark ? "text-[#79C0FF]" : "text-[#0550AE]"}`}>
+                          {activeEntry.mtaEquivalent}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Engine Equivalents */}
+                    {activeEntry.platformEquivalents?.map((plat, idx) => {
+                      const badgeColor = 
+                        plat.platform.includes("Unity") ? "text-emerald-500" :
+                        plat.platform.includes("Unreal") ? "text-purple-400" :
+                        plat.platform.includes("Godot") ? "text-sky-400" :
+                        plat.platform.includes("FiveM") ? "text-orange-400" : "text-amber-500";
+
+                      return (
+                        <div key={idx} className={`p-2 rounded border font-mono ${
+                          isDark ? "bg-[#0D1117] border-[#30363D]" : "bg-white border-[#D0D7DE]"
+                        }`}>
+                          <div className={`text-[10px] font-sans font-bold mb-0.5 ${badgeColor}`}>
+                            {plat.platform}
+                          </div>
+                          <div className={`text-[11px] font-semibold ${isDark ? "text-[#F0F6FC]" : "text-[#1F2328]"}`}>
+                            {plat.code}
+                          </div>
+                          {plat.notesTh && (
+                            <div className="text-[10px] font-sans text-[#8B949E] mt-1">
+                              {lang === "th" ? plat.notesTh : plat.notesEn}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 1. SYNTAX BOX */}
@@ -407,62 +464,64 @@ export default function WikiViewer({
               />
             </section>
 
-            {/* 2. ARGUMENTS TABLE */}
-            <section className="space-y-3">
-              <h2 className={`text-sm font-semibold uppercase tracking-wider flex items-center gap-2 ${
-                isDark ? "text-[#8B949E]" : "text-[#656D76]"
-              }`}>
-                <span className={isDark ? "text-[#58A6FF]" : "text-[#0969DA]"}>☷</span>
-                <span>Parameters & Arguments</span>
-              </h2>
+            {/* 2. ARGUMENTS TABLE (Only show if there are parameters) */}
+            {activeEntry.arguments && activeEntry.arguments.length > 0 && (
+              <section className="space-y-3">
+                <h2 className={`text-sm font-semibold uppercase tracking-wider flex items-center gap-2 ${
+                  isDark ? "text-[#8B949E]" : "text-[#656D76]"
+                }`}>
+                  <span className={isDark ? "text-[#58A6FF]" : "text-[#0969DA]"}>☷</span>
+                  <span>Parameters & Arguments</span>
+                </h2>
 
-              <div className={`overflow-x-auto rounded-lg border ${
-                isDark ? "border-[#30363D] bg-[#161B22]" : "border-[#D0D7DE] bg-[#FFFFFF]"
-              }`}>
-                <table className="w-full text-left text-xs">
-                  <thead className={`border-b ${
-                    isDark ? "bg-[#21262D] text-[#8B949E] border-[#30363D]" : "bg-[#F6F8FA] text-[#656D76] border-[#D0D7DE]"
-                  }`}>
-                    <tr>
-                      <th className="py-2.5 px-4 font-semibold font-mono">Parameter</th>
-                      <th className="py-2.5 px-4 font-semibold font-mono">Type</th>
-                      <th className="py-2.5 px-4 font-semibold font-mono">Required</th>
-                      <th className="py-2.5 px-4 font-semibold">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${
-                    isDark ? "divide-[#21262D]" : "divide-[#E1E4E8]"
-                  }`}>
-                    {activeEntry.arguments.map((arg, idx) => (
-                      <tr key={idx} className={isDark ? "hover:bg-[#1C2128]" : "hover:bg-[#F6F8FA]"}>
-                        <td className={`py-3 px-4 font-mono font-semibold ${
-                          isDark ? "text-[#79C0FF]" : "text-[#0550AE]"
-                        }`}>
-                          {arg.name}
-                        </td>
-                        <td className="py-3 px-4 font-mono">
-                          <span className={`px-2 py-0.5 rounded text-[11px] ${
-                            isDark ? "bg-[#21262D] text-[#A5D6FF]" : "bg-[#DDF4FF] text-[#0969DA]"
-                          }`}>
-                            {arg.type}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 font-mono">
-                          {arg.required ? (
-                            <span className="font-semibold text-[11px] text-amber-500">Yes</span>
-                          ) : (
-                            <span className={`text-[11px] ${isDark ? "text-[#6E7681]" : "text-[#8C959F]"}`}>Optional</span>
-                          )}
-                        </td>
-                        <td className={`py-3 px-4 ${isDark ? "text-[#C9D1D9]" : "text-[#424A53]"}`}>
-                          {lang === "th" ? arg.descTh : arg.descEn}
-                        </td>
+                <div className={`overflow-x-auto rounded-lg border ${
+                  isDark ? "border-[#30363D] bg-[#161B22]" : "border-[#D0D7DE] bg-[#FFFFFF]"
+                }`}>
+                  <table className="w-full text-left text-xs">
+                    <thead className={`border-b ${
+                      isDark ? "bg-[#21262D] text-[#8B949E] border-[#30363D]" : "bg-[#F6F8FA] text-[#656D76] border-[#D0D7DE]"
+                    }`}>
+                      <tr>
+                        <th className="py-2.5 px-4 font-semibold font-mono">Parameter</th>
+                        <th className="py-2.5 px-4 font-semibold font-mono">Type</th>
+                        <th className="py-2.5 px-4 font-semibold font-mono">Required</th>
+                        <th className="py-2.5 px-4 font-semibold">Description</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+                    </thead>
+                    <tbody className={`divide-y ${
+                      isDark ? "divide-[#21262D]" : "divide-[#E1E4E8]"
+                    }`}>
+                      {activeEntry.arguments.map((arg, idx) => (
+                        <tr key={idx} className={isDark ? "hover:bg-[#1C2128]" : "hover:bg-[#F6F8FA]"}>
+                          <td className={`py-3 px-4 font-mono font-semibold ${
+                            isDark ? "text-[#79C0FF]" : "text-[#0550AE]"
+                          }`}>
+                            {arg.name}
+                          </td>
+                          <td className="py-3 px-4 font-mono">
+                            <span className={`px-2 py-0.5 rounded text-[11px] ${
+                              isDark ? "bg-[#21262D] text-[#A5D6FF]" : "bg-[#DDF4FF] text-[#0969DA]"
+                            }`}>
+                              {arg.type}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 font-mono">
+                            {arg.required ? (
+                              <span className="font-semibold text-[11px] text-amber-500">Yes</span>
+                            ) : (
+                              <span className={`text-[11px] ${isDark ? "text-[#6E7681]" : "text-[#8C959F]"}`}>Optional</span>
+                            )}
+                          </td>
+                          <td className={`py-3 px-4 ${isDark ? "text-[#C9D1D9]" : "text-[#424A53]"}`}>
+                            {lang === "th" ? arg.descTh : arg.descEn}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
 
             {/* 3. RETURN VALUES */}
             <section className="space-y-3">

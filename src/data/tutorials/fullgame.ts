@@ -921,4 +921,271 @@ end`,
       "Unbiased role selection with classic Fisher-Yates array shuffling.",
     ],
   },
+  {
+    id: "lab-9-4",
+    category: "FullGame",
+    phaseId: 9,
+    phaseTitleTh: "เฟสที่ 9: โปรเจกต์สร้างเกมจริงระดับ Production",
+    phaseTitleEn: "Phase 9: Production Full Game Projects",
+    titleTh: "Lab 9.4: ซอมบี้ AI เดินอ้อมกำแพงไล่ล่า (PathfindingService AI)",
+    titleEn: "Lab 9.4: Smart Zombie Pathfinding AI & Obstacle Navigation",
+    difficulty: "Advanced",
+    durationMin: 30,
+    summaryTh:
+      "สร้างมอนสเตอร์/ซอมบี้ AI ฉลาดที่คำนวณเส้นทางเดินอ้อมกำแพงหลบสิ่งกีดขวาง (Waypoint Navigation), กระโดดข้ามรั้วอัตโนมัติ และโจมตีลดเลือดเมื่อประชิดตัว",
+    summaryEn:
+      "Create intelligent enemy AI using PathfindingService to calculate waypoints around walls, jump obstacles, and deal melee damage upon arrival.",
+    mentalModelTh:
+      "PathfindingService ทำหน้าที่เป็น GPS: ส่งพิกัดเป้าหมาย (ผู้เล่นที่ใกล้ที่สุด) เข้าไปคำนวณ ได้ชุดจุดหมุด (Waypoints) ออกมา จากนั้นสั่งให้ Humanoid:MoveTo() เดินไปตามหมุดทีละจุด หากหมุดถัดไประบุให้กระโดด ก็สั่ง Jump = true",
+    mentalModelEn:
+      "Pathfinding acts as an internal GPS. Given start and end points, it computes an array of PathWaypoints. The zombie walks along these nodes using Humanoid:MoveTo(), jumping whenever a waypoint requires elevation.",
+    stepsTh: [
+      "1. ใช้ `PathfindingService:CreatePath()` กำหนดขนาดรัศมีตัวละครและความสูงการกระโดด",
+      "2. ค้นหาผู้เล่นที่อยู่ใกล้ที่สุดในระยะตรวจจับ (Aggro Range)",
+      "3. คำนวณเส้นทางและสั่งให้ซอมบี้เดินตาม Waypoints ด้วย `Humanoid.MoveToFinished:Wait()`",
+      "4. ตรวจสอบการแตะโดนตัวเพื่อลดพลังชีวิต (TakeDamage)",
+    ],
+    stepsEn: [
+      "1. Initialize Path with agent radius, height, and jump capability parameters.",
+      "2. Identify nearest player target within agro radius.",
+      "3. Compute path and traverse waypoints sequentially with MoveToFinished:Wait().",
+      "4. Trigger damage dealing on target proximity.",
+    ],
+    scriptType: "Script (Server)",
+    scriptLocation: "ServerScriptService",
+    code: `--!strict
+-- ZombieAI.server.luau
+-- Smart Pathfinding Enemy Controller`,
+    files: [
+      {
+        filename: "ZombieAI.server.luau",
+        scriptType: "Script (Server)",
+        scriptLocation: "ServerScriptService",
+        descriptionTh: "สคริปต์ควบคุมการคำนวณเส้นทางและการเดินไล่ล่าของซอมบี้",
+        descriptionEn: "Controls path computation, waypoint traversal, and attack logic.",
+        code: `local PathfindingService = game:GetService("PathfindingService")
+local Players = game:GetService("Players")
+
+local zombie = script.Parent
+local humanoid = zombie:WaitForChild("Humanoid") :: Humanoid
+local rootPart = zombie:WaitForChild("HumanoidRootPart") :: BasePart
+
+local AGGRO_RADIUS = 60
+local ATTACK_DAMAGE = 20
+local ATTACK_COOLDOWN = 1.0
+local lastAttackTime = 0
+
+-- 1. ตั้งค่าคุณสมบัติการเดินและกระโดดของ AI
+local path = PathfindingService:CreatePath({
+    AgentRadius = 2.5,
+    AgentHeight = 5.0,
+    AgentCanJump = true,
+    WaypointSpacing = 4,
+})
+
+-- ฟังก์ชันค้นหาผู้เล่นที่อยู่ใกล้ที่สุด
+local function findNearestTarget(): BasePart?
+    local nearestDist = AGGRO_RADIUS
+    local targetRoot: BasePart? = nil
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        local char = player.Character
+        if char then
+            local targetHum = char:FindFirstChild("Humanoid") :: Humanoid
+            local targetPart = char:FindFirstChild("HumanoidRootPart") :: BasePart
+
+            if targetHum and targetHum.Health > 0 and targetPart then
+                local dist = (targetPart.Position - rootPart.Position).Magnitude
+                if dist < nearestDist then
+                    nearestDist = dist
+                    targetRoot = targetPart
+                end
+            end
+        end
+    end
+    return targetRoot
+end
+
+-- 2. ลูปไล่ล่าหลัก
+task.spawn(function()
+    while humanoid.Health > 0 do
+        local target = findNearestTarget()
+
+        if target then
+            -- คำนวณเส้นทางหลบสิ่งกีดขวาง
+            local success, _ = pcall(function()
+                path:ComputeAsync(rootPart.Position, target.Position)
+            end)
+
+            if success and path.Status == Enum.PathStatus.Success then
+                local waypoints = path:GetWaypoints()
+
+                -- เดินตามแต่ละจุด Waypoint
+                for i = 2, math.min(#waypoints, 6) do
+                    local wp = waypoints[i]
+
+                    -- สั่งกระโดดถ้ามีสิ่งกีดขวางขวางอยู่
+                    if wp.Action == Enum.PathWaypointAction.Jump then
+                        humanoid.Jump = true
+                    end
+
+                    humanoid:MoveTo(wp.Position)
+
+                    -- รอให้เดินถึงจุดนั้น หรือหลุด timeout ใน 1 วินาที
+                    local reached = humanoid.MoveToFinished:Wait()
+                    if not reached or (target.Position - rootPart.Position).Magnitude < 4 then
+                        break
+                    end
+                end
+            else
+                -- ถ้าคำนวณทางไม่เจอ ให้พุ่งตรงไปหาเป้าหมายตรงๆ
+                humanoid:MoveTo(target.Position)
+            end
+        end
+
+        task.wait(0.3)
+    end
+end)
+
+-- 3. ตรวจจับการโจมตีเมื่อชนตัวผู้เล่น
+rootPart.Touched:Connect(function(hit)
+    if os.clock() - lastAttackTime < ATTACK_COOLDOWN then return end
+
+    local char = hit.Parent
+    if char then
+        local targetHum = char:FindFirstChild("Humanoid") :: Humanoid
+        if targetHum and targetHum ~= humanoid and targetHum.Health > 0 then
+            lastAttackTime = os.clock()
+            targetHum:TakeDamage(ATTACK_DAMAGE)
+            print("🧟 ซอมบี้โจมตีใส่:", char.Name, "ดาเมจ:", ATTACK_DAMAGE)
+        end
+    end
+end)`,
+      },
+    ],
+    expectedResultTh:
+      "ซอมบี้จะตรวจหาผู้เล่นในระยะ 60 studs คำนวณเส้นทางเดินอ้อมผนังห้องหรือกล่องสิ่งกีดขวาง กระโดดข้ามสิ่งกีดขวาง และเมื่อเข้าประชิดตัวจะลดเลือดผู้เล่นทีละ 20 หน่วย",
+    expectedResultEn:
+      "Zombie senses nearest player within 60 studs, computes pathfinding around obstacles, leaps over barriers, and inflicts 20 damage on contact.",
+    keyTakeawaysTh: [
+      "PathfindingService: หลีกเลี่ยงปัญหาบอทเดินติดกำแพง โดยให้ระบบคำนวณ Waypoints อัตโนมัติ",
+      "Agent Parameters: กำหนดขนาดตัวละครเพื่อให้ AI รู้ว่าช่องแคบขนาดไหนที่สามารถเดินผ่านได้",
+      "Waypoint Action: ดักฟัง Enum.PathWaypointAction.Jump เพื่อสั่งให้ตัวละครกระโดดข้ามสิ่งกีดขวาง",
+    ],
+    keyTakeawaysEn: [
+      "PathfindingService solves wall-sticking bugs via automatic obstacle mesh baking.",
+      "Agent Parameters ensure navigation mesh matches custom creature bounding boxes.",
+      "PathWaypointAction.Jump triggers procedural leaps across elevation boundaries.",
+    ],
+  },
+  {
+    id: "lab-9-5",
+    category: "FullGame",
+    phaseId: 9,
+    phaseTitleTh: "เฟสที่ 9: โปรเจกต์สร้างเกมจริงระดับ Production",
+    phaseTitleEn: "Phase 9: Production Full Game Projects",
+    titleTh: "Lab 9.5: ระบบสัตว์เลี้ยงลอยตามหลังตัวละคร (Pet Follower Physics)",
+    titleEn: "Lab 9.5: Simulator Pet Follower Physics with AlignPosition",
+    difficulty: "Intermediate",
+    durationMin: 25,
+    summaryTh:
+      "สร้างระบบสัตว์เลี้ยงสไตล์ Pet Simulator: ลอยตามหลังผู้เล่นอย่างนุ่มนวลด้วยฟิสิกส์ Constraint (AlignPosition & AlignOrientation) พร้อมเอฟเฟกต์เด้งดึ๋งและหันหน้าตามทิศทางเดิน",
+    summaryEn:
+      "Build a modern Pet Simulator style follower system using AlignPosition and AlignOrientation constraints for buttery smooth, drift-free movement.",
+    mentalModelTh:
+      "แทนที่จะเขียน CFrame ลูปแบบเดิมซึ่งจะดูแข็งกระด้าง ให้ใช้ Physics Constraints: วาง Attachment ไว้ที่ตัวละครเป็นจุดเป้าหมาย (Offset ข้างหลังเยื้องไปทางขวา) และใส่ Attachment ไว้ที่ตัว Pet จากนั้นใช้ AlignPosition ดึง Pet ให้บินตามเหมือนมีแม่เหล็กดูดอย่างสมูท",
+    mentalModelEn:
+      "Modern pet systems use Physics Constraints instead of hard CFrame ticking. An attachment on the player serves as target offset, while AlignPosition & AlignOrientation smoothly spring the pet without teleport jitter.",
+    stepsTh: [
+      "1. สร้าง Pet Model พร้อมชิ้นส่วนหลัก `PrimaryPart` และตั้งค่า Massless = true",
+      "2. สร้าง Attachment สำหรับเป็นจุดอ้างอิงตำแหน่งด้านหลังไหล่ขวาของผู้เล่น",
+      "3. ใช้ `AlignPosition` และ `AlignOrientation` เชื่อมต่อเพื่อบังคับการลอยและหันหน้า",
+      "4. ใส่แอนิเมชันลอยกระดิกตัว (Bobbing Idle) เพื่อความมีชีวิตชีวา",
+    ],
+    stepsEn: [
+      "1. Configure pet model PrimaryPart with Massless and collision filters.",
+      "2. Create target offset Attachment behind player shoulder.",
+      "3. Connect AlignPosition and AlignOrientation constraints.",
+      "4. Apply subtle procedural sine wave bobbing for organic idle feel.",
+    ],
+    scriptType: "Script (Server)",
+    scriptLocation: "ServerScriptService",
+    code: `--!strict
+-- PetSpawner.server.luau
+-- Physics-based Pet Follower Manager`,
+    files: [
+      {
+        filename: "PetSpawner.server.luau",
+        scriptType: "Script (Server)",
+        scriptLocation: "ServerScriptService",
+        descriptionTh: "เสกสัตว์เลี้ยงและผูก Physics Constraints ให้ลอยตามตัวละครผู้เล่น",
+        descriptionEn: "Spawns pet instance and binds constraints to character rig.",
+        code: `local Players = game:GetService("Players")
+
+-- ฟังก์ชันสร้างและผูกสัตว์เลี้ยงเข้ากับตัวละคร
+local function equipPet(character: Model)
+    local rootPart = character:WaitForChild("HumanoidRootPart") :: BasePart
+
+    -- 1. สร้างตัวโมเดล Pet จำลอง (Part ทรงกลม/กล่อง)
+    local pet = Instance.new("Part")
+    pet.Name = "DogPet"
+    pet.Size = Vector3.new(2, 2, 2)
+    pet.Color = Color3.fromRGB(255, 170, 0)
+    pet.Material = Enum.Material.SmoothPlastic
+    pet.CanCollide = false
+    pet.Massless = true
+    pet.CFrame = rootPart.CFrame * CFrame.new(3, 1, 3)
+
+    -- 2. สร้าง Attachment บนตัวผู้เล่น (ตำแหน่งเยื้องไปด้านหลังขวา)
+    local playerAttach = Instance.new("Attachment")
+    playerAttach.Name = "PetTargetAttachment"
+    playerAttach.Position = Vector3.new(3, 1.5, 3) -- ขวา 3, สูง 1.5, หลัง 3
+    playerAttach.Parent = rootPart
+
+    -- 3. สร้าง Attachment บนตัวสัตว์เลี้ยง
+    local petAttach = Instance.new("Attachment")
+    petAttach.Parent = pet
+
+    -- 4. ตั้งค่า AlignPosition ให้บินตามอย่างสมูท
+    local alignPos = Instance.new("AlignPosition")
+    alignPos.Attachment0 = petAttach
+    alignPos.Attachment1 = playerAttach
+    alignPos.Responsiveness = 20 -- ความไวในการบินตาม
+    alignPos.MaxForce = 100000
+    alignPos.Parent = pet
+
+    -- 5. ตั้งค่า AlignOrientation ให้หันหน้าไปทิศเดียวกับผู้เล่น
+    local alignRot = Instance.new("AlignOrientation")
+    alignRot.Attachment0 = petAttach
+    alignRot.Attachment1 = playerAttach
+    alignRot.Responsiveness = 25
+    alignRot.MaxTorque = 100000
+    alignRot.Parent = pet
+
+    pet.Parent = character
+    print("🐾 ผูกสัตว์เลี้ยงให้ตัวละครสำเร็จ!")
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        equipPet(character)
+    end)
+end)`,
+      },
+    ],
+    expectedResultTh:
+      "เมื่อตัวละครเกิด สัตว์เลี้ยงจะเสกขึ้นมาลอยตามหลังเยื้องทางขวาของผู้เล่นอย่างนุ่มนวล เมื่อผู้เล่นวิ่งหรือกระโดด สัตว์เลี้ยงจะบินตามและหมุนหันหน้าตามอย่างสมจริงโดยไม่สั่นกระตุก",
+    expectedResultEn:
+      "Upon spawning, a companion pet hovers stably behind the character's shoulder, smoothly trailing sprints and jumps without physics clipping.",
+    keyTakeawaysTh: [
+      "Constraint-based Follower: ใช้ AlignPosition แทน CFrame Loop ช่วยให้การเคลื่อนที่นุ่มนวลและไม่กินสเปก CPU",
+      "Massless = true: สำคัญมาก! ป้องกันไม่ให้น้ำหนักของสัตว์เลี้ยงไปถ่วงตัวละครทำให้เดินช้าลง",
+      "CanCollide = false: ป้องกันสัตว์เลี้ยงไปชนดันตัวละครตกแมพหรือกระเด้งผิดธรรมชาติ",
+    ],
+    keyTakeawaysEn: [
+      "AlignPosition constraints deliver buttery physics interpolation with zero network rubberbanding.",
+      "Massless property prevents accessory weight from slowing down player movement.",
+      "Disabling CanCollide ensures zero unintended physical entanglement with the host.",
+    ],
+  },
 ];

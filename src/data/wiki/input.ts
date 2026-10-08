@@ -183,4 +183,60 @@ end`,
     ],
     related: ["userinputservice-inputbegan", "basepart-applyimpulse"],
   },
+  {
+    id: "userinputservice-getmouselocation",
+    name: "UserInputService:GetMouseLocation",
+    category: "Input",
+    kind: "Method",
+    summaryTh: "ดึงพิกัดตำแหน่งของเมาส์บนหน้าจอแบบ 2D (Pixel) โดยหักลบแถบ Topbar ของระบบออกให้อัตโนมัติ (ใช้สำหรับระบบชี้เล็งปืนและเรย์แคสต์)",
+    summaryEn: "Returns the 2D screen coordinate location of the mouse cursor, accounting for topbar offset.",
+    syntax: "local screenPos = UserInputService:GetMouseLocation(): Vector2",
+    useCases: ["ยิงลำแสง Raycast จากจุดที่เมาส์ชี้บนจอลงสู่โลก 3D", "แสดง Cursor เป้าปืน Crosshair ที่ตามเมาส์", "ระบบ Drag & Drop ย้ายไอเทมในช่องเก็บของ"],
+    arguments: [],
+    returns: [
+      {
+        type: "Vector2",
+        descTh: "พิกัด X, Y บนหน้าจอแสดงผล",
+        descEn: "Screen position in pixels.",
+      },
+    ],
+    examples: [
+      {
+        titleTh: "ระบบยิง Raycast จากเมาส์บนหน้าจอลงสู่โลก 3D (3D Mouse Raycast)",
+        titleEn: "Screen-to-World Mouse Raycasting",
+        tab: "Client",
+        scenarioTh: "แปลงตำแหน่งเมาส์บนจอ 2D ให้กลายเป็นลำแสงพุ่งเข้าไปในฉาก 3D",
+        scenarioEn: "Project 2D viewport cursor position into 3D world raycast.",
+        code: `local UserInputService = game:GetService("UserInputService")
+local camera = workspace.CurrentCamera
+
+local function get3DMouseHit(): Vector3?
+    -- 1. ดึงตำแหน่งเมาส์ 2D บนจอ
+    local mouseLocation = UserInputService:GetMouseLocation()
+    
+    -- 2. แปลงเป็นลำแสงผ่านกล้อง 3D (ViewportPointToRay)
+    local unitRay = camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
+    
+    -- 3. ยิง Raycast ตรวจจับพื้นผิวในโลก 3D
+    local raycastResult = workspace:Raycast(unitRay.Origin, unitRay.Direction * 1000)
+    
+    if raycastResult then
+        return raycastResult.Position
+    end
+    return nil
+end`,
+        explanationTh: "เป็นมาตรฐานสมัยใหม่ที่ใช้แทน mouse.Hit เพราะยืดหยุ่น ปรับแต่ง Filter ได้ และรองรับหลายแพลตฟอร์ม",
+        explanationEn: "Modern replacement for legacy mouse.Hit with granular raycast parameter filtering.",
+      },
+    ],
+    tipsTh: [
+      "ใช้ร่วมกับ `camera:ViewportPointToRay(pos.X, pos.Y)` เพื่อเปลี่ยนพิกัดหน้าจอเป็นทิศทางในโลกเกม",
+      "มีค่าความแม่นยำกว่า `Player:GetMouse()` แบบเดิม",
+    ],
+    tipsEn: [
+      "Combine with camera:ViewportPointToRay() to derive raycast origins seamlessly.",
+      "Far more precise and performant than deprecated Player:GetMouse() object.",
+    ],
+    related: ["workspace-raycast", "userinputservice-inputbegan"],
+  },
 ];
