@@ -143,6 +143,81 @@ end
   },
 ];
 
+// Luau Syntax Highlighting for Interactive Simulator Editor
+function highlightLuauLine(line: string): React.ReactNode {
+  const commentIdx = line.indexOf("--");
+  if (commentIdx !== -1) {
+    const beforeComment = line.substring(0, commentIdx);
+    const commentText = line.substring(commentIdx);
+    return (
+      <>
+        {tokenizeCode(beforeComment)}
+        <span className="text-[#6A9955] italic">{commentText}</span>
+      </>
+    );
+  }
+  return tokenizeCode(line);
+}
+
+function tokenizeCode(code: string): React.ReactNode {
+  const tokenRegex = /(".*?"|'.*?'|\b(?:local|function|end|if|then|else|elseif|return|for|do|in|while|repeat|until|not|and|or|true|false|nil)\b|\b(?:Instance|Vector3|CFrame|Color3|RaycastParams|Enum|workspace|task|math|string|table|pcall|print|warn|error)\b|\b(?:\d+(?:\.\d+)?)\b|[:.]([a-zA-Z_]\w*)|([a-zA-Z_]\w*)(?=\s*\())/g;
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = tokenRegex.exec(code)) !== null) {
+    const matchStart = match.index;
+    const matchEnd = tokenRegex.lastIndex;
+
+    if (matchStart > lastIndex) {
+      parts.push(code.substring(lastIndex, matchStart));
+    }
+
+    const token = match[0];
+
+    // String literal
+    if ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'"))) {
+      parts.push(<span key={matchStart} className="text-[#CE9178]">{token}</span>);
+    }
+    // Keywords
+    else if (/^(local|function|end|if|then|else|elseif|return|for|do|in|while|repeat|until|not|and|or|true|false|nil)$/.test(token)) {
+      parts.push(<span key={matchStart} className="text-[#569CD6] font-semibold">{token}</span>);
+    }
+    // Roblox Built-in Globals & Types
+    else if (/^(Instance|Vector3|CFrame|Color3|RaycastParams|Enum|workspace|task|math|string|table|pcall|print|warn|error)$/.test(token)) {
+      parts.push(<span key={matchStart} className="text-[#4EC9B0]">{token}</span>);
+    }
+    // Numbers
+    else if (/^\d+(\.\d+)?$/.test(token)) {
+      parts.push(<span key={matchStart} className="text-[#B5CEA8]">{token}</span>);
+    }
+    // Methods / Properties e.g. :Raycast or .Position
+    else if (token.startsWith(":") || token.startsWith(".")) {
+      parts.push(
+        <span key={matchStart}>
+          <span className="text-[#D4D4D4]">{token[0]}</span>
+          <span className="text-[#DCDCAA]">{token.slice(1)}</span>
+        </span>
+      );
+    }
+    // Function calls
+    else if (match[2]) {
+      parts.push(<span key={matchStart} className="text-[#DCDCAA]">{token}</span>);
+    } else {
+      parts.push(token);
+    }
+
+    lastIndex = matchEnd;
+  }
+
+  if (lastIndex < code.length) {
+    parts.push(code.substring(lastIndex));
+  }
+
+  return parts;
+}
+
 interface SimulatorPlaygroundProps {
   code: string;
   setCode: (c: string) => void;
@@ -404,8 +479,21 @@ export default function SimulatorPlayground({
               ))}
             </div>
 
-            {/* Code Textarea Editor */}
-            <div className="flex-1 min-h-0 relative p-3 overflow-hidden">
+            {/* Code Textarea Editor with Synchronized Syntax Highlighting */}
+            <div className="flex-1 min-h-0 relative p-3 overflow-hidden font-mono text-xs sm:text-[13px]">
+              {/* Highlighted text layer (Behind textarea) */}
+              <pre
+                aria-hidden="true"
+                className="absolute inset-0 p-3 m-0 pointer-events-none font-mono text-xs sm:text-[13px] leading-6 whitespace-pre overflow-hidden bg-transparent select-none"
+              >
+                {code.split("\n").map((line, i) => (
+                  <div key={i} className="leading-6 min-h-[1.5rem]">
+                    {highlightLuauLine(line)}
+                  </div>
+                ))}
+              </pre>
+
+              {/* Editable textarea layer (Front, transparent text caret visible) */}
               <textarea
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
@@ -431,7 +519,7 @@ export default function SimulatorPlayground({
                 }}
                 placeholder="-- Write Luau code here (Ctrl+Enter to run)..."
                 spellCheck={false}
-                className="w-full h-full bg-transparent text-[#D4D4D4] resize-none focus:outline-none font-mono leading-6 selection:bg-[#264F78] selection:text-white overflow-auto no-scrollbar whitespace-pre"
+                className="absolute inset-0 p-3 w-full h-full bg-transparent text-transparent caret-[#58A6FF] resize-none focus:outline-none font-mono text-xs sm:text-[13px] leading-6 selection:bg-[#264F78]/60 selection:text-transparent overflow-auto no-scrollbar whitespace-pre"
               />
             </div>
           </div>
